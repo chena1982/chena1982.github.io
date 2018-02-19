@@ -1,0 +1,1163 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next muse use-motion" lang="en">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=6.0.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=6.0.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=6.0.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=6.0.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=6.0.4" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    version: '6.0.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  
+  <meta name="keywords" content="Image Base Lighting,Spherical Harmonics,Convolution,Solid Angle,Importance Sampling,Hammersley," />
+
+
+<meta name="description" content="IBL能很大的提升光照效果，很多游戏里都有使用。这篇文章的目标是用一篇文章把IBL的方方面面讲明白，当然，需要读者有一定的基础知识。 如果你看完了还是有些地方不懂，给我留言，我会考虑再增补一些内容。">
+<meta name="keywords" content="Image Base Lighting,Spherical Harmonics,Convolution,Solid Angle,Importance Sampling,Hammersley">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Image Base Lighting">
+<meta property="og:url" content="http://yoursite.com/2017/06/08/Image-Base-Lighting/index.html">
+<meta property="og:site_name" content="ChenA&#39;s Blog">
+<meta property="og:description" content="IBL能很大的提升光照效果，很多游戏里都有使用。这篇文章的目标是用一篇文章把IBL的方方面面讲明白，当然，需要读者有一定的基础知识。 如果你看完了还是有些地方不懂，给我留言，我会考虑再增补一些内容。">
+<meta property="og:locale" content="en">
+<meta property="og:image" content="http://yoursite.com/2017/06/08/Image-Base-Lighting/basis_function.png">
+<meta property="og:image" content="http://yoursite.com/2017/06/08/Image-Base-Lighting/dw.png">
+<meta property="og:image" content="http://yoursite.com/2017/06/08/Image-Base-Lighting/pdf.png">
+<meta property="og:image" content="http://yoursite.com/2017/06/08/Image-Base-Lighting/cdf.png">
+<meta property="og:image" content="http://yoursite.com/2017/06/08/Image-Base-Lighting/Hammersley.png">
+<meta property="og:image" content="http://yoursite.com/2017/06/08/Image-Base-Lighting/Hammersley2.png">
+<meta property="og:image" content="http://yoursite.com/2017/06/08/Image-Base-Lighting/specular_compare_metal.png">
+<meta property="og:image" content="http://yoursite.com/2017/06/08/Image-Base-Lighting/specular_compare_dielectric.png">
+<meta property="og:image" content="http://yoursite.com/2017/06/08/Image-Base-Lighting/brdf.png">
+<meta property="og:updated_time" content="2018-02-19T15:08:28.035Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Image Base Lighting">
+<meta name="twitter:description" content="IBL能很大的提升光照效果，很多游戏里都有使用。这篇文章的目标是用一篇文章把IBL的方方面面讲明白，当然，需要读者有一定的基础知识。 如果你看完了还是有些地方不懂，给我留言，我会考虑再增补一些内容。">
+<meta name="twitter:image" content="http://yoursite.com/2017/06/08/Image-Base-Lighting/basis_function.png">
+
+
+
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2017/06/08/Image-Base-Lighting/"/>
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+  <title>Image Base Lighting | ChenA's Blog</title>
+  
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="en">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"> <div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">ChenA's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-home"></i> <br />Home</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />Tags</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-th"></i> <br />Categories</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />Archives</a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+  
+
+
+
+ </div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/06/08/Image-Base-Lighting/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="ChenA">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="ChenA's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Image Base Lighting</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-06-08T03:03:43+08:00">2017-06-08</time>
+            
+
+            
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/Rendering/" itemprop="url" rel="index"><span itemprop="name">Rendering</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>IBL能很大的提升光照效果，很多游戏里都有使用。这篇文章的目标是用一篇文章把IBL的方方面面讲明白，当然，需要读者有一定的基础知识。 如果你看完了还是有些地方不懂，给我留言，我会考虑再增补一些内容。<a id="more"></a></p>
+<h2 id="irradiance-environment-map">Irradiance Environment Map</h2>
+<p>想象一个场景，有k个方向光，方向是<span class="math inline">\(d_{1}\)</span>…<span class="math inline">\(d_{k}\)</span>，强度是<span class="math inline">\(L_{1}\)</span>…<span class="math inline">\(L_{k}\)</span>，照亮一个diffuse surface，法线是n，diffuse color是c，最终的光照结果为E。</p>
+<p><span class="math display">\[E=\int_\Omega L_{i}\ cos(\theta_{i})d_{\omega_{i}}\]</span></p>
+<p><span class="math display">\[E=c\sum_{i=1..k}{max(0,d_{i}\cdot n)L_{i}}\]</span></p>
+<p>一个environment map可以认为存储了k个方向光，每个pixel点的位置是光的方向，每个pixel点的值是光的强度。</p>
+<p>Runtime的时候如果计算这么多个光源太慢了，所以可以先预计算保存好。</p>
+<p>对任意一个方向N，对输入的environment map用max(0, dot(L, N))做卷积，然后把结果存在输出的environment map里，runtime的时候直接用N采样这个输出的environment map就可以了。</p>
+<p>Diffuse Convolution Pseudocode:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">diffuseConvolution(outputEnvironmentMap, inputEnvironmentMap)</span><br><span class="line">&#123;</span><br><span class="line">  for_all &#123;T0: outputEnvironmentMap&#125;</span><br><span class="line">    sum = 0</span><br><span class="line">    N = envMap_direction(T0)</span><br><span class="line">    for_all &#123;T1: inputEnvironmentMap&#125;</span><br><span class="line">      L = envMap_direction(T1)</span><br><span class="line">      I = inputEnvironmentMap[T1]</span><br><span class="line">      sum += max(0, dot(L, N)) * I</span><br><span class="line">    T0 = sum</span><br><span class="line">  return outputEnvironmentMap</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这里输出的environment map就叫做diffuse irrandiance environment map。</p>
+<p>简单一句话，Irradiance Enviroment Map就是对Environment Map用max(0, dot(L, N))在上半球做卷积的结果。</p>
+<h3 id="convolution">Convolution</h3>
+<h4 id="the-basis">The Basis</h4>
+<p>在线性代数里面，可以用两个向量来创建另一个向量。</p>
+<p><span class="math display">\[\begin{aligned}
+  {v} = {v_1} + {v_2}
+\end{aligned}\]</span></p>
+<p>每个向量其实是用它的basis vectors构建出来的。比如在一个二维空间，basis vectors为 <span class="math inline">\({\Phi_1} = (1,\ 0)\)</span> 和 <span class="math inline">\({\Phi_2} = (0,\ 1)\)</span> ， <span class="math inline">\({v} = (3,\ 2)\)</span> 就是用两个basis vectors构建出来的。</p>
+<p><span class="math display">\[\begin{aligned}
+\left(
+    \begin{array}{c} 
+         3\\ 
+         2
+    \end{array} 
+\right) = 3 \cdot {\Phi_1} + 2 \cdot {\Phi_2}
+\end{aligned}\]</span></p>
+<p><span class="math inline">\(3\)</span>和<span class="math inline">\(2\)</span>是coefficients of basis vectors <span class="math inline">\({\Phi_i}\)</span>，简写为<span class="math inline">\(c_i\)</span>。</p>
+<p><span class="math display">\[\begin{aligned}
+    {v} = c_1 \cdot {\Phi_1} + c_2 \cdot {\Phi_2}
+\end{aligned}\]</span></p>
+<p>对于函数来说也一样，可以用<span class="math inline">\(v_1(x)\)</span>和<span class="math inline">\(v_2(x)\)</span>来构建<span class="math inline">\(v(x)\)</span>。</p>
+<p><span class="math display">\[\begin{aligned}
+  v(x) = v_1(x) + v_2(x)
+\end{aligned}\]</span></p>
+<p>就像用可以用basis vectors来构建一个vector，也可以用一系列的basis function来表达一个函数。</p>
+<p><span class="math display">\[\begin{aligned}
+  v(x) = c_1 \cdot \Phi_1(x) + c_2 \cdot \Phi_2(x)
+\end{aligned}\]</span></p>
+<p>问题来了，怎么样得到coefficients（比如，<span class="math inline">\(c_1\)</span>和<span class="math inline">\(c_2\)</span>）？</p>
+<p>在线性代数中可以把<span class="math inline">\({v}\)</span>投影到basis vector上，就可以得到cofficients，投影可以用dot product来做，或者更一般的形式inner product <span class="math inline">\(\langle, \rangle\)</span>，inner product是一种矩阵乘法，可以把<span class="math inline">\({v}\)</span>投影到每一个basis vector <span class="math inline">\({\Phi_i}\)</span>上。</p>
+<p><span class="math display">\[\begin{aligned}
+    \langle {v}, {\Phi_i} \rangle = c_i
+\end{aligned}\]</span></p>
+<p>也可以写用向量的单独组件<span class="math inline">\(v_k\)</span>和<span class="math inline">\(\Phi_{ik}\)</span>的乘积表示：</p>
+<p><span class="math display">\[\begin{equation}
+\sum_k v_k \cdot \Phi_{ik} = c_i
+\end{equation}\label{eq1}\]</span></p>
+<p>得到cofficients之后，可以很容易用cofficients来重新构建<span class="math inline">\({v}\)</span>：</p>
+<p><span class="math display">\[\begin{equation}
+    \sum_i c_i \cdot {\Phi_i} = {v}
+\end{equation}\label{eq2}\]</span></p>
+<p>类似公式<span class="math inline">\(\eqref{eq1}\)</span>，可以用函数<span class="math inline">\(v(s)\)</span>，<span class="math inline">\(\Phi_i(s)\)</span>在域<span class="math inline">\(S\)</span>上积分来计算一系列cofficients <span class="math inline">\(c_i\)</span>： <span class="math display">\[\begin{equation}
+    \int_S v(s) \Phi_i(s) ds = c_i
+\end{equation}\label{eq3}\]</span></p>
+<p>公式<span class="math inline">\(\eqref{eq1}\)</span>和<span class="math inline">\(\eqref{eq3}\)</span>仅有的区别在于1是离散的，3必须用积分来表达，这也是为什么用inner product来表示，不管basis是函数、向量、内积都可以表达：</p>
+<p><span class="math display">\[\begin{aligned}
+    \langle v, \Phi_i \rangle = c_i
+\end{aligned}\]</span></p>
+<p>类似公式<span class="math inline">\(\eqref{eq2}\)</span>，也可以用cofficients来重构原始函数： <span class="math display">\[\begin{aligned}
+    \sum_i c_i \cdot \Phi_i(s) = v(s)
+\end{aligned}\]</span></p>
+<h4 id="basis-function-properties">Basis Function Properties</h4>
+<p>很显然，basis不是随便选取的，需要basis相互之间是orthonormal。</p>
+<p>对于向量，可以用内积（也就是dot product）来计算向量之间的关系。<br>
+如果i!=j的时候积分为0，说明<span class="math inline">\({\Phi_i}\)</span>和<span class="math inline">\({\Phi_j}\)</span>是orthogonal，另外，如果i=j的时候积分为1，<span class="math inline">\({\Phi_i}\)</span>和<span class="math inline">\({\Phi_j}\)</span>是orthonormal。</p>
+<p><span class="math display">\[\begin{aligned}
+c = \langle {\Phi_i}, {\Phi_j} \rangle = {\Phi_i} \cdot {\Phi_j} = \delta_{ij} = 
+    \left\{
+        \begin{array}{c} 
+             1, i = j    \\ 
+             0, i \neq j
+        \end{array} 
+    \right.
+\end{aligned}\]</span></p>
+<p>对于函数来说，也是一样的，也是用内积来计算，对于函数来说内积需要用积分来计算。<br>
+如果i!=j的时候积分为0，那么函数<span class="math inline">\(\Phi_i(s)\)</span>和<span class="math inline">\(\Phi_j(s)\)</span>就是orthogonal，另外如果i=j的时候积分为1，函数<span class="math inline">\(\Phi_i(s)\)</span>和<span class="math inline">\(\Phi_j(s)\)</span>是orthonormal。</p>
+<p><span class="math display">\[\begin{equation}
+    c = \langle \Phi_i, \Phi_j \rangle = \int_S \Phi_i(s) \cdot \Phi_j(s) ds = \delta_{ij} = 
+        \left\{
+            \begin{array}{c} 
+                 1, i = j    \\
+                 0, i \neq j
+            \end{array} 
+        \right.
+\end{equation}\label{eq4}\]</span></p>
+<h4 id="convolution-1">Convolution</h4>
+<p>现在我们已经知道怎么样得到cofficients，也知道怎么样判断两个basis function是否orthonormal。我们可以做一点有趣的事。</p>
+<p>假如我们已经知道两个basis function <span class="math inline">\(\Phi_i(s)\)</span>和<span class="math inline">\(\Phi_j(s)\)</span>，我们可以用basis function来表示函数<span class="math inline">\(f(s)\)</span>和<span class="math inline">\(g(s)\)</span>。</p>
+<p><span class="math display">\[\begin{aligned}
+    f(s) = \sum_i f_i \cdot \Phi_i(s) \\ 
+    g(s) = \sum_j g_j \cdot \Phi_j(s)
+\end{aligned}\]</span></p>
+<p>我们想求<span class="math inline">\(f(s)\)</span>和<span class="math inline">\(g(s)\)</span>的积分。</p>
+<p><span class="math display">\[\begin{aligned}
+    \int_S f(s) \cdot g(s) ds = \int_S \left( \sum_i f_i \cdot \Phi_i(s) \right) \cdot \left( \sum_j g_j \cdot \Phi_j(s) \right)ds
+\end{aligned}\]</span></p>
+<p>可以把系数提取出来。</p>
+<p><span class="math display">\[\begin{aligned}
+    \int_S f(s) \cdot g(s) ds &amp; = \int_S \left( \sum_i f_i \cdot \Phi_i(s) \right) \cdot \left( \sum_j g_j \cdot \Phi_j(s) \right)ds \\ 
+                              &amp; = \sum_i \sum_j f_i \cdot g_j \cdot \int_S \Phi_i(s) \cdot \Phi_j(s) ds
+\end{aligned}\]</span></p>
+<p>带入公式<span class="math inline">\(\eqref{eq4}\)</span>。</p>
+<p><span class="math display">\[\begin{aligned}
+    \int_S f(s) \cdot g(s) ds &amp; = \int_S \left( \sum_i f_i \cdot \Phi_i(s) \right) \cdot \left( \sum_j g_j \cdot \Phi_j(s) \right)ds \\ 
+                              &amp; = \sum_i \sum_j f_i \cdot g_j \cdot \int_S \Phi_i(s) \cdot \Phi_j(s) ds \\
+                              &amp; = \sum_i \sum_j f_i \cdot g_j \cdot \delta_{ij} 
+\end{aligned}\]</span></p>
+<p>如果i != j，<span class="math inline">\(\delta_{ij}\)</span> = 0，可以简化一下公式。</p>
+<p><span class="math display">\[\begin{aligned}
+    \int_S f(s) \cdot g(s) ds &amp; = \int_S \left( \sum_i f_i \cdot \Phi_i(s) \right) \cdot \left( \sum_j g_j \cdot \Phi_j(s) \right)ds \\ 
+                              &amp; = \sum_i \sum_j f_i \cdot g_j \cdot \int_S \Phi_i(s) \cdot \Phi_j(s) ds \\
+                              &amp; = \sum_i \sum_j f_i \cdot g_j \cdot \delta_{ij} \\ 
+                              &amp; = \sum_i f_i \cdot g_i
+\end{aligned}\]</span></p>
+<p><span class="math inline">\(f(s)\)</span>和<span class="math inline">\(g(s)\)</span>的积分变成cofficients <span class="math inline">\(f_i\)</span>和<span class="math inline">\(g_i\)</span>的dot product，如果basis function是orthonormal。</p>
+<h3 id="spherical-harmonics">Spherical Harmonics</h3>
+<h4 id="sh-basis-function">SH Basis Function</h4>
+<p>先看一下basis function的样子，红色是正值，蓝色是负值：</p>
+<figure>
+<img src="basis_function.png" alt="basis function"><figcaption>basis function</figcaption>
+</figure>
+<p>basis function是定义在极坐标系： <span class="math display">\[x,y,z=sin\ \theta \ cos\ \phi, sin\ \theta sin\ \phi, cos\ \phi\]</span></p>
+<p>basis function <span class="math inline">\(Y_{l}^{m}\)</span>的定义： <span class="math display">\[Y_{l}^{m}(\theta, \phi) = K_{l}^{m}e^{im\phi}P_{l}^{|m|}(cos\ \theta),\ l\in N,\ -l\le m\le l\]</span></p>
+<p>其中<span class="math inline">\(P_{l}^{m}\)</span>是Associated Legendre polynomials, <span class="math inline">\(K_{l}^{m}\)</span>是normalization constants:</p>
+<p><span class="math display">\[K_{l}^{m}=\sqrt{\frac{(2l+1)(l-|m|)!}{4\pi(l+|m|)!}}\]</span></p>
+<p>上面是复数形式的定义，实数形式的定义如下：</p>
+<p><span class="math display">\[y_{l}^{m}=\left\{\begin{aligned}&amp; \sqrt{2}Re(Y_{l}^{m})&amp; m&gt;0 \\&amp; \sqrt{2}Im(Y_{l}^{m})&amp; m&lt;0\\&amp; Y_{l}^{0}&amp; m=0 \end{aligned}\right.=\left\{\begin{aligned}&amp; \sqrt{2}K_{l}^{m} \ cos(m\phi)\ P_{l}^{m}(cos\ \theta)&amp; m&gt;0\\&amp; \sqrt{2}K_{l}^{m} \ sin(|m|\phi)\ P_{l}^{|m|}(cos\ \theta)&amp; m&lt;0\\&amp; K_{l}^{0}P_{l}^{0}(cos\ \theta)&amp; m=0\end{aligned}\right.\]</span></p>
+<h4 id="associated-legendre-polynomials">Associated Legendre polynomials</h4>
+<p>Associated Legendre polynomials(只依赖于z)可以通过下面的公式迭代计算：</p>
+<p><span class="math display">\[P_{0}^{0}=1\]</span> <span class="math display">\[P_{m}^{m}=(1-2m)P_{m-1}^{m-1}\]</span> <span class="math display">\[P_{m+1}^{m}=(2m+1)zP_{m}^{m}\]</span> <span class="math display">\[P_{l}^{m}=\frac{(2l-1)zP_{l-1}^{m}-(l+m-1)P_{l-2}^{m}}{l-m}\]</span></p>
+<h4 id="polynomial-forms-of-basis-function">Polynomial Forms of Basis Function</h4>
+<p>basis function的多项式形式：</p>
+<p><span class="math display">\[y_{0}^{0}(\theta, \phi)=\frac{1}{2\sqrt{\pi}}\]</span> <span class="math display">\[y_{1}^{-1}(\theta, \phi)=-\frac{\sqrt{3}y}{2\sqrt{\pi}}\]</span> <span class="math display">\[y_{1}^{0}(\theta, \phi)=-\frac{\sqrt{3}z}{2\sqrt{\pi}}\]</span> <span class="math display">\[y_{1}^{1}(\theta, \phi)=-\frac{\sqrt{3}x}{2\sqrt{\pi}}\]</span></p>
+<h4 id="properties">Properties</h4>
+<p>sh basis function是orthonormal的。</p>
+<h4 id="how-to-use">How to use</h4>
+<p>SH常用用法有二种：<br>
+1. 把函数投射到SH bias上，运行时根据系数重建函数。<br>
+2. 把函数分解成两个部分，每个部分分别投射到SH bias上，运行时直接用两个系数相乘就可以重建函数。</p>
+<h3 id="calculate-sh-cofficients">Calculate SH Cofficients</h3>
+<p>diffuse的convolution直接计算很慢，这里可以用sh来处理。 这里使用第1种方法。</p>
+<p>假设输入的cubemap size是64，输出cubemap size是32。<br>
+convolution的计算量：32x32x6x64x64x6 = 151 million operations。<br>
+sh的计算量：9x64x64x6 = 221 thousand operations。</p>
+<p>两个函数在spatial domain的卷积相当于在frequency domain相乘。 这样就可以把比较慢的convolution变成乘法。</p>
+<p>把light environment和max(0, dot(L, N))分别用sh表达，然后他们乘积的convolution就可以转换成他们的sh系数的乘积。 进一步观察可以发现max(0, dot(L, N))的sh系数是固定的，对每个点都是一样的，所以可以把max(0, dot(L, N))的系数先预计算好。</p>
+<p>我们先计算入射光的sh系数。</p>
+<p>Spherical Harmonic Transform:</p>
+<p><span class="math display">\[
+L_l^m=\int_{\Omega}L(\theta, \phi)\ y_l^m(\theta, \phi)\ d\omega =\int_{\phi=0}^{2\pi}\int_{\theta=0}^{\frac{\pi}{2}}L(\theta, \phi)\ y_l^m(\theta, \phi)\ sin\theta\ d\theta\ d\phi
+\]</span></p>
+<p>Discrete Spherical Harmonic Transform: <span class="math display">\[L_l^m=\sum_{i=0}^{N-1}L(i)\ y_{l}^{m}(i)\ dw(i)\]</span></p>
+<p>其中 <span class="math display">\[\sum_{i=0}^{N-1}dw(i)=4\pi\]</span></p>
+<p><span class="math inline">\(dw(i)\)</span>就是每个texel的solid angle，具体的公式推导见1.4。</p>
+<p>算完了之后，再用inverse spherical harmonic transform把sh系数重新转换到spatial domain，也就是重新转换为cubemap。</p>
+<p>Inverse Spherical Harmonic Transform: <span class="math display">\[\tilde{L}(\theta, \phi) = \sum_{l=0}^{n-1}\sum_{m=-l}^{l}L_l^my_l^m(\theta, \phi)\]</span></p>
+<p>加上max(0, dot(L, N))之后，总的sh系数只需要乘以<span class="math inline">\(\hat{A}_l\)</span>。 对于2阶sh：</p>
+<p><span class="math display">\[\hat{A}_{0} = 3.141593\quad \hat{A}_{1} = 2.094395 \quad \hat{A}_{1} = 0.785398\]</span></p>
+<p><span class="math display">\[\hat{A} = \pi,\frac{2}{3}\pi,\frac{1}{4}\pi\]</span></p>
+<p>这里再除以<span class="math inline">\(\pi\)</span>，也就是：</p>
+<p><span class="math display">\[\hat{A} = 1,\frac{2}{3},\frac{1}{4}\]</span></p>
+<p>因为根据irrandiance和Lambertian的brdf计算出射光公式为：</p>
+<p><span class="math display">\[L_o=\frac{c_{diff}}{\pi}E\]</span></p>
+<p>计算系数的时候除以<span class="math inline">\(\pi\)</span>，runtime计算光照的时候就不需要除以<span class="math inline">\(\pi\)</span>了：</p>
+<p><span class="math display">\[L_o=c_{diff}E\]</span></p>
+<p>伪代码如下： <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br></pre></td><td class="code"><pre><span class="line">// A. generate SH irradiance map</span><br><span class="line">// Project the lighting environment</span><br><span class="line">for each texel of the cubemap</span><br><span class="line">&#123;</span><br><span class="line">    float3 c_light = texel_radiance;</span><br><span class="line">    float weight = texelSolidAngle;</span><br><span class="line">    float3 n = texelDirection;</span><br><span class="line">    float SHLightL[9];</span><br><span class="line">    </span><br><span class="line">    //calculate sh cofficients</span><br><span class="line">    SHLightL[0] += 0.282095f * c_light * weight;</span><br><span class="line">    SHLightL[1] += -0.488603f * n.y * c_light * weight;</span><br><span class="line">    SHLightL[2] += 0.488603f * n.z * c_light * weight;</span><br><span class="line">    SHLightL[3] += -0.488603f * n.x * c_light * weight;</span><br><span class="line">    SHLightL[4] += 1.092548f * n.x * n.y * c_light * weight;</span><br><span class="line">    SHLightL[5] += -1.092548f * n.y * n.z * c_light * weight;</span><br><span class="line">    SHLightL[6] += 0.315392f * (3.0f * n.z * n.z - 1.0f) * c_light * weight;</span><br><span class="line">    SHLightL[7] += -1.092548f * n.x * n.z * c_light * weight;</span><br><span class="line">    SHLightL[8] += 0.546274f * (n.x * n.x - n.y * n.y) * c_light * weight;    </span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// Convolve with SH-projected cosinus lobe</span><br><span class="line">float ConvolveCosineLobeBandFactor[] =</span><br><span class="line">&#123;</span><br><span class="line">    PI,</span><br><span class="line">    2.0f * PI/3.0f, 2.0f * PI/3.0f, 2.0f * PI/3.0f,</span><br><span class="line">    PI/4.0f, PI/4.0f, PI/4.0f, PI/4.0f, PI/4.0f</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">for (int i = 0; i &lt; 9; ++i)</span><br><span class="line">    SHLightL[i] *= ConvolveCosineLobeBandFactor[i];</span><br><span class="line"></span><br><span class="line">//</span><br><span class="line">// B. Get exit radiance from irradiance</span><br><span class="line">// Evaluate irradiance at surface with normal n</span><br><span class="line">float SHLightResult[9];</span><br><span class="line">SHLightResult[0] = 0.282095f * SHLightL[0];</span><br><span class="line">SHLightResult[1] = -0.488603f * n.y * SHLightL[1];</span><br><span class="line">SHLightResult[2] = 0.488603f * n.z * SHLightL[2];</span><br><span class="line">SHLightResult[3] = -0.488603f * n.x * SHLightL[3];</span><br><span class="line">SHLightResult[4] = 1.092548f * n.x * n.y * SHLightL[4];</span><br><span class="line">SHLightResult[5] = -1.092548f * n.y * n.z * SHLightL[5];</span><br><span class="line">SHLightResult[6] = 0.315392f * (3.0f * n.z * n.z - 1.0f) * SHLightL[6];</span><br><span class="line">SHLightResult[7] = -1.092548f * n.x * n.z * SHLightL[7];</span><br><span class="line">SHLightResult[8] = 0.546274f * (n.x * n.x - n.y * n.y) * SHLightL[8];</span><br><span class="line"></span><br><span class="line">float result = 0.0f;</span><br><span class="line">for (int i = 0; i &lt; 9; ++i)</span><br><span class="line">    result += SHLightResult[i];</span><br><span class="line"></span><br><span class="line">// Turn irradiance to radiance for Lambertian surface and get exit radiance</span><br><span class="line">L_o = result * c_diff / PI;</span><br></pre></td></tr></table></figure></p>
+<h3 id="solid-angle">Solid Angle</h3>
+<h4 id="define">Define</h4>
+<p>理解立体角之前要先理解圆心角，在二维平面上，一个圆的圆弧的微分记为<span class="math inline">\(d_s\)</span>(也叫弧微分)，半径为r，则圆心角指的是弧微分与半径的比值：</p>
+<p><span class="math display">\[d_{\theta}=\frac{d_s}{r}\]</span></p>
+<p>对这个式子做0到2π的积分的话，显然右边的分子变成了圆周长2πr，圆心角为<span class="math inline">\(\frac{2\pi r}{r}=2\pi\)</span>。</p>
+<p>立体角与圆心角非常类似，立体角的<span class="math inline">\(d_s\)</span>的含义是球面上的面积微分（下文用<span class="math inline">\(d_A\)</span>表示），而分母需要变成半径r的平方（1球面度所对应的立体角所对应的球面表面积为<span class="math inline">\(r^2\)</span>）：</p>
+<p><span class="math display">\[d_{\omega}=\frac{d_A}{r^2}\]</span></p>
+<p>因为球体表面积等于<span class="math inline">\(4\pi r^2\)</span>，所以上面的式子积分到整个球体的话，立体角等于4π。</p>
+<h4 id="domega公式推导"><span class="math inline">\(d\omega\)</span>公式推导</h4>
+<p><span class="math display">\[x,y,z=sin\ \theta \ cos\ \phi, sin\ \theta sin\ \phi, cos\ \phi\]</span></p>
+<p>先给出<span class="math inline">\(d_{\omega}\)</span>的公式：</p>
+<p><span class="math display">\[
+d\omega = sin\theta\ d\theta\ d\phi
+\]</span></p>
+<p>根据上面弧度的定义，如果已知弧度和半径，就可以求出弧长s，那么上面的θ、ϕ对应的弧长就是：</p>
+<p><span class="math display">\[s_\theta=r_\theta \theta\]</span></p>
+<p><span class="math display">\[s_{\phi}=r_{\phi}\phi\]</span></p>
+<p>微分形式： <span class="math display">\[ds_{ \theta } = r_{ \theta } d\theta\]</span></p>
+<p><span class="math display">\[ds_{ \phi } = r_{ \phi } d\phi\]</span></p>
+<p><span class="math inline">\(r_{\theta}\)</span>、<span class="math inline">\(r_{\phi}\)</span>值并不是相等的：</p>
+<figure>
+<img src="dw.png" alt="calculate dw"><figcaption>calculate dw</figcaption>
+</figure>
+<p>从图可知，<span class="math inline">\(r_{\theta}\)</span>与圆的半径r相等；而<span class="math inline">\(r_{\phi}\)</span>是小于等于r的(注意看上面的小圆)，且有：</p>
+<p><span class="math display">\[sin\theta = \frac { r_{ \phi } } {r_{ \theta } }\]</span></p>
+<p>当球是单位球时，球的半径为1，所以有：</p>
+<p><span class="math display">\[r_{ \theta } = 1\]</span></p>
+<p><span class="math display">\[r_{ \phi } = sin\theta  r_{ \theta } = sin\theta\]</span></p>
+<p>又因为在微观下，立体角对应的曲面(或者叫球帽)面积可以当做一个小矩形看，这个小矩形dA的面积等于2个弧长<span class="math inline">\(ds_\theta\)</span>和<span class="math inline">\(ds_\phi\)</span>的积：</p>
+<p><span class="math display">\[d_A = ds_{\theta} ds_{ \phi } = r_{ \theta } r_{ \phi }d\theta d\phi = sin\theta d\theta d\phi\]</span></p>
+<p>再因为立体角的微分其实也就是这个小矩形的面积，那么就有：</p>
+<p><span class="math display">\[d\omega = d_A = sin\theta d\theta d\phi\]</span></p>
+<p>Cubemap上的Texel的Solid Angle的公式这里就不推导了，可以看 <a href="http://www.rorydriscoll.com/2012/01/15/cubemap-texel-solid-angle/" target="_blank" rel="noopener">Cubemap Texel Solid Angle</a>。</p>
+<h2 id="prefiltered-mipmaped-radiance-environment-map">Prefiltered Mipmaped Radiance Environment Map</h2>
+<p>我们用Important Sampling的蒙特卡罗积分来计算Specular，<span class="math inline">\(f(l_k,v)\)</span>是brdf。</p>
+<p><span class="math display">\[
+\int\limits_H L_i(l)f(l,v)cos\theta_l\,dl\approx\frac{1}{N}\sum_{k=1}^N\frac{L_i(l_k)f(l_k,v)cos\theta l_k}{p(l_k,v)}
+\]</span></p>
+<p>其中p是概率密度函数[Physically-Based Shading at Disney]： <span class="math display">\[p({l_k},{v})=\frac{D({h})({h}\cdot{n})}{4({l}\cdot{h})}\]</span></p>
+<h3 id="important-sampling">Important Sampling</h3>
+<p>Important Sampling的原理很简单，就是越重要的方向，使用越多的采样点，而不是均匀分布。<br>
+这里涉及到两个概念pdf和cdf：</p>
+<p>pdf，概率密度函数，这个很容易理解，就是在某个方向的概率有多大，越重要的方向，概率越大。<br>
+cdf，累积分布函数，就是随机变量小于某一个值的概率，可以通过pdf积分得到。</p>
+<p><span class="math display">\[
+cdf(x) = \int_{0}^{x}\ pdf(x)\ dx
+\]</span></p>
+<p>为了更好的理解，举一个具体的例子：</p>
+<p>罐装苏打水的填充重量服从正态分布，且均值为 12 盎司，标准差为 2 盎司。<br>
+概率密度函数pdf，x为填充重量，y为填充重量为x的可能性。<br>
+累积分布函数cdf，x为填充重量，y为填充重量小于x的累积概率。</p>
+<figure>
+<img src="pdf.png" alt="pdf"><figcaption>pdf</figcaption>
+</figure>
+<p>任意特定点处的填充重量的 cdf 等于 pdf 曲线下，从原点到该点左侧区域的面积：<br>
+比如&lt;=11.5盎司的cdf是0.401294</p>
+<figure>
+<img src="cdf.png" alt="cdf"><figcaption>cdf</figcaption>
+</figure>
+<p>如果知道cdf为0.401294，我们是可以计算出x值为11.5的。</p>
+<p>Importance Sampling，就是先生成均匀分布的随机点，然后根据pdf函数计算出采样点。<br>
+这里生成的随机点，其实就是cdf的值，根据cdf的值可以求出x。<br>
+cdf是一维的，所以这里是把球面坐标系的两个角度单独出来了，最后根据这两个角度可以得到方向，就是采样的方向。</p>
+<h3 id="specular-reference">Specular Reference</h3>
+<p>求Specular的步骤如下：</p>
+<ol type="1">
+<li>生成2D空间的随机点<span class="math inline">\(\xi_\theta\)</span>和<span class="math inline">\(\xi_\phi\)</span></li>
+<li>根据BRDF的概率密度函数pdf，从<span class="math inline">\(\xi_\theta\)</span>和<span class="math inline">\(\xi_\phi\)</span>计算importance sampling需要的球面坐标系<span class="math inline">\(s_\theta\)</span>和<span class="math inline">\(s_\phi\)</span></li>
+<li>把球面坐标系的和转换成直角坐标系的halfway</li>
+<li>-reflect(view, halfway)，得到light方向</li>
+<li>有了light、view、halfway，就可以计算出光照</li>
+</ol>
+<p>第一步我们用Hammersley，在2.3里讲。<br>
+第二步比较复杂，推导如下：</p>
+<p>对于Microfacet model来说：</p>
+<p><span class="math display">\[
+f(l,v)=\frac{D(\theta_h)F(\theta_d)G(\theta_l,\theta_v)}{4cos\theta_l\ cos\theta_v}
+\]</span></p>
+<p><span class="math inline">\(\theta_d\)</span>是l和h的夹角，其它的都是下标和n的夹角。</p>
+<p>NDF都必须满足下面的规则：</p>
+<p><span class="math display">\[
+\int_\Omega D(\theta)\ cos\theta\ d\omega = 1
+\]</span></p>
+<p>pdf的积分也必须等于1，所以在solid angle上的pdf为：</p>
+<p><span class="math display">\[
+pdf_h(\omega)=D({\theta_h})\ cos{\theta_h} = \frac{\alpha^2 cos{\theta_h}}{\pi(cos{\theta_h}^2(\alpha^2-1)+1)^2}
+\]</span></p>
+<p>一般我们不直接在solid angle上积分，而是在球面坐标系里积分：</p>
+<p><span class="math display">\[
+\Large
+pdf_h(\theta, \phi) = D({\theta_h})\ cos{\theta_h}\ sin{\theta_h}= \frac{\alpha^2 cos{\theta_h} sin{\theta_h}}{\pi(cos{\theta_h}^2(\alpha^2-1)+1)^2}
+\]</span></p>
+<p><span class="math display">\[
+\Large
+pdf_l = \frac {pdf_h} {4(l \cdot h)}
+\]</span></p>
+<p>这里<span class="math inline">\(\theta\)</span>和<span class="math inline">\(\phi\)</span>是独立的，先把<span class="math inline">\(\theta\)</span>积分掉：</p>
+<p><span class="math display">\[
+ \begin{aligned}
+pdf_h(\phi)=\int_{\Omega}pdf_h(\omega)\ d\omega &amp;= \int_{\theta=0}^{\frac{\pi}{2}} pdf_h(\theta, \phi)\ d{\theta_h} \\
+&amp;= \frac{1}{2\pi}
+\end{aligned}
+\]</span></p>
+<p>积分pdf得到cdf： <span class="math display">\[
+\xi_{\phi_h} = \int_{\phi=0}^{s_\phi} pdf_h(\phi)\ d{\phi_h} = \frac {s_{\phi}} {2\pi}
+\]</span></p>
+<p>这里就可以求出<span class="math inline">\(s_{\phi}\)</span>：</p>
+<p><span class="math display">\[
+s_\phi = 2\pi\xi_\phi
+\]</span></p>
+<p>根据<span class="math inline">\(pdf_h(\theta,\phi)\)</span>和<span class="math inline">\(pdf_h(\phi)\)</span>可以得到<span class="math inline">\(pdf_h(\theta)\)</span>：</p>
+<p><span class="math display">\[
+\begin{aligned}
+pdf_h(\theta) &amp; = \frac {pdf_h(\theta,\phi)} {pdf_h(\phi)} \\
+&amp; = \frac {2\alpha^2 cos{\theta_h} sin{\theta_h}} {(cos{\theta_h}^2(\alpha^2-1)+1)^2}
+\end{aligned}
+\]</span></p>
+<p>同样积分pdf得到cdf：</p>
+<p><span class="math display">\[
+\xi_{\theta_h} = \int_{\theta=0}^{s_\theta} pdf_h(\theta)\ d{\theta_h}
+\]</span></p>
+<p>解这个积分，得到：</p>
+<p><span class="math display">\[
+cos({s_\theta}) = \frac {\sqrt{1-\xi_\theta}} {\sqrt{1+(\alpha^2-1)\xi_\theta}}
+\]</span></p>
+<p>合起来总的代码如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line">float3 ImportanceSampleGGX( float2 Xi, float Roughness , float3 N )</span><br><span class="line">&#123;</span><br><span class="line">	float a = Roughness * Roughness;</span><br><span class="line">	float Phi = 2 * PI * Xi.x;</span><br><span class="line">	float CosTheta = sqrt( (1 - Xi.y) / ( 1 + (a*a - 1) * Xi.y ) );</span><br><span class="line">	float SinTheta = sqrt( 1 - CosTheta * CosTheta );</span><br><span class="line">	float3 H;</span><br><span class="line">	H.x = SinTheta * cos( Phi );</span><br><span class="line">	H.y = SinTheta * sin( Phi );</span><br><span class="line">	H.z = CosTheta;</span><br><span class="line">	float3 UpVector = abs(N.z) &lt; 0.999 ? float3(0,0,1) : float3(1,0,0);</span><br><span class="line">	float3 TangentX = normalize( cross( UpVector , N ) );</span><br><span class="line">	float3 TangentY = cross( N, TangentX );</span><br><span class="line">	// Tangent to world space</span><br><span class="line">	return TangentX * H.x + TangentY * H.y + N * H.z;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">float3 SpecularIBL( float3 SpecularColor , float Roughness , float3 N, float3 V )</span><br><span class="line">&#123;</span><br><span class="line">	float3 SpecularLighting = 0;</span><br><span class="line">	const uint NumSamples = 1024;</span><br><span class="line">	for( uint i = 0; i &lt; NumSamples; i++ )</span><br><span class="line">	&#123;</span><br><span class="line">		float2 Xi = Hammersley( i, NumSamples );</span><br><span class="line">		float3 H = ImportanceSampleGGX( Xi, Roughness , N );</span><br><span class="line">		float3 L = 2 * dot( V, H ) * H - V;</span><br><span class="line">		float NoV = saturate( dot( N, V ) );</span><br><span class="line">		float NoL = saturate( dot( N, L ) );</span><br><span class="line">		float NoH = saturate( dot( N, H ) );</span><br><span class="line">		float VoH = saturate( dot( V, H ) );</span><br><span class="line">		if( NoL &gt; 0 )</span><br><span class="line">		&#123;</span><br><span class="line">			float3 SampleColor = EnvMap.SampleLevel( EnvMapSampler , L, 0 ).rgb;</span><br><span class="line">			float G = G_Smith( Roughness , NoV, NoL );</span><br><span class="line">			float Fc = pow( 1 - VoH, 5 );</span><br><span class="line">			float3 F = (1 - Fc) * SpecularColor + Fc;</span><br><span class="line">			// Incident light = SampleColor * NoL</span><br><span class="line">			// Microfacet specular = D*G*F / (4*NoL*NoV)</span><br><span class="line">			// pdf = D * NoH / (4 * VoH)</span><br><span class="line">			SpecularLighting += SampleColor * F * G * VoH / (NoH * NoV);</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	return SpecularLighting / NumSamples;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="hammersley">Hammersley</h3>
+<p>首先是一个概念，Hammersley Point Set：</p>
+<p>有一个点集，<span class="math inline">\(\mathcal{P_N} = \left\{\ {x}_1, ..., {x}_N \right\}\)</span>，包含<span class="math inline">\(N \geq 1\)</span>个点，所有点在<span class="math inline">\([0, 1)^2\)</span>里。Hammersley Point Set <span class="math inline">\(\mathcal{H_N}\)</span>定义为： <span class="math display">\[
+\mathcal{H_N} = \left\{x_i = \binom{i / N}{\Phi_2(i)}, \quad \text{for} \quad i = 0, ..., N - 1 \right\} \qquad\quad
+\]</span></p>
+<p>其中<span class="math inline">\(\Phi_2(i)\)</span>是Van der Corput sequence： 先把i转成二进制形式，然后把这个二进制数在小数点的位置做镜像。</p>
+<p><span class="math inline">\(\Phi_2(i)\)</span>定义为：</p>
+<p><span class="math display">\[\Phi_2(i) = \frac{a_0}{2} + \frac{a_1}{2^2} + ... + \frac{a_r}{2^{r+1}}\]</span></p>
+<p>其中<span class="math inline">\(a_0 a_1 ... a_r\)</span>是i的二进制形式的每位的值，<span class="math inline">\(i = a_0 + a_1 2 + a_2 2^2 + a_3 2^3 + ... + a_r 2^r\)</span>。</p>
+<figure>
+<img src="Hammersley.png" alt="Van der Corput sequence"><figcaption>Van der Corput sequence</figcaption>
+</figure>
+<figure>
+<img src="Hammersley2.png" alt="Hammersley Point Set"><figcaption>Hammersley Point Set</figcaption>
+</figure>
+<h3 id="specular-sh">Specular SH</h3>
+<p>Realtime的时候，Specular用Important Sampling的蒙特卡罗积分肯定是不行的，太慢了。</p>
+<p>所以用预计算来优化渲染速度，主要想法是把光照公式分两部分积分，光源和brdf分开单独积分。</p>
+<p><span class="math display">\[
+\frac{1}{N}\sum_{k=1}^N\frac{L_i(l_k)f(l_k,v)cos\theta_{l_{k}}}{p(l_k,v)}\approx\left(\frac{1}{N}\sum_{k=1}^NL_i(l_k)\right)\left(\frac{1}{N}\sum_{k=1}^N\frac{f(l_k,v)cos\theta_{l_{k}}}{p(l_k,v)}\right)
+\]</span></p>
+<p>光源也是用Important Sampling的蒙特卡罗积分：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">float3 PrefilterEnvMap( float Roughness , float3 R )</span><br><span class="line">&#123;</span><br><span class="line">    float3 N = R;</span><br><span class="line">    float3 V = R;</span><br><span class="line">    float3 PrefilteredColor = 0;</span><br><span class="line">    const uint NumSamples = 1024;</span><br><span class="line">    for( uint i = 0; i &lt; NumSamples; i++ )</span><br><span class="line">    &#123;</span><br><span class="line">        float2 Xi = Hammersley( i, NumSamples );</span><br><span class="line">        float3 H = ImportanceSampleGGX( Xi, Roughness , N );</span><br><span class="line">        float3 L = 2 * dot( V, H ) * H - V;</span><br><span class="line">        float NoL = saturate( dot( N, L ) );</span><br><span class="line">        if( NoL &gt; 0 )</span><br><span class="line">        &#123;</span><br><span class="line">            PrefilteredColor += EnvMap.SampleLevel( EnvMapSampler , L, 0 ).rgb * NoL;</span><br><span class="line">            TotalWeight += NoL;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    return PrefilteredColor / TotalWeight;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这里有一个假设n=r=v，这样在grazing angles的细长反射会消失，但总的来说和Reference还是非常接近的。</p>
+<p>各种情况的对比如下：</p>
+<figure>
+<img src="specular_compare_metal.png" alt="specular_compare_metal"><figcaption>specular_compare_metal</figcaption>
+</figure>
+<p>最上面是Reference，中间是分成两个部分积分，下面是把n=r=v的假设也加上。</p>
+<figure>
+<img src="specular_compare_dielectric.png" alt="specular_compare_dielectric"><figcaption>specular_compare_dielectric</figcaption>
+</figure>
+<p>非金属。</p>
+<p>现在来看brdf的积分。<br>
+Fresnel的公式为：</p>
+<p><span class="math display">\[
+F(v,h) = F_0 + (1-F_0)(1-v \cdot h)^5
+\]</span></p>
+<p>brdf的积分可以把<span class="math inline">\(F_0\)</span>提取出来：</p>
+<p><span class="math display">\[
+\int\limits_H f(l,v)cos\theta_ldl = F_0 \int\limits_H \frac {f(l,v)} {F(v,h)} \left(1-(1-v \cdot h)^5 \right) cos\theta_l dl + \int\limits_H \frac {f(l,v)} {F(v,h)} (1-v \cdot h)^5 cos\theta_l dl
+\]</span></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line">float2 IntegrateBRDF( float Roughness , float NoV )</span><br><span class="line">&#123;</span><br><span class="line">    float3 V;</span><br><span class="line">    V.x = sqrt( 1.0f - NoV * NoV ); // sin</span><br><span class="line">    V.y = 0;</span><br><span class="line">    V.z = NoV; // cos</span><br><span class="line">    float A = 0;</span><br><span class="line">    float B = 0;</span><br><span class="line">    const uint NumSamples = 1024;</span><br><span class="line">    for( uint i = 0; i &lt; NumSamples; i++ )</span><br><span class="line">    &#123;</span><br><span class="line">        float2 Xi = Hammersley( i, NumSamples );</span><br><span class="line">        float3 H = ImportanceSampleGGX( Xi, Roughness , N );</span><br><span class="line">        float3 L = 2 * dot( V, H ) * H - V;</span><br><span class="line">        float NoL = saturate( L.z );</span><br><span class="line">        float NoH = saturate( H.z );</span><br><span class="line">        float VoH = saturate( dot( V, H ) );</span><br><span class="line">        if( NoL &gt; 0 )</span><br><span class="line">        &#123;</span><br><span class="line">            float G = G_Smith( Roughness , NoV, NoL );</span><br><span class="line">            float G_Vis = G * VoH / (NoH * NoV);</span><br><span class="line">            float Fc = pow( 1 - VoH, 5 );</span><br><span class="line">        </span><br><span class="line">            // Microfacet specular = D*G*F / (4*NoL*NoV)</span><br><span class="line">            // pdf = D * NoH / (4 * VoH)            </span><br><span class="line">            A += (1 - Fc) * G_Vis;</span><br><span class="line">            B += Fc * G_Vis;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    return float2( A, B ) / NumSamples;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>把A和B放到贴图的rg通道里，Runtime根据Roughness和<span class="math inline">\(cos \theta_v\)</span>采样就可以。</p>
+<figure>
+<img src="brdf.png" alt="brdf"><figcaption>brdf</figcaption>
+</figure>
+<p>Runtime时求Specular：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">float3 ApproximateSpecularIBL( float3 SpecularColor , float Roughness , float3 N, float3 V )</span><br><span class="line">&#123;</span><br><span class="line">    float NoV = saturate( dot( N, V ) );</span><br><span class="line">    float3 R = 2 * dot( V, N ) * N - V;</span><br><span class="line">    float3 PrefilteredColor = PrefilterEnvMap( Roughness , R );</span><br><span class="line">    float2 EnvBRDF = IntegrateBRDF( Roughness , NoV );</span><br><span class="line">    return PrefilteredColor * ( SpecularColor * EnvBRDF.x + EnvBRDF.y );</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="future">Future</h2>
+<p>Realtime Generate IEM and PMREM<br>
+BRDF LUT Surface fitting</p>
+<h2 id="bibliography">Bibliography</h2>
+<ol type="1">
+<li>Real Shading in Unreal Engine 4<br>
+</li>
+<li>Physically Based Shading at Disney<br>
+</li>
+<li>An Efficient Representation for Irradiance Environment Maps<br>
+</li>
+<li>Stupid Spherical Harmonics (SH) Tricks<br>
+</li>
+<li><a href="https://seblagarde.wordpress.com/2012/01/08/pi-or-not-to-pi-in-game-lighting-equation/" target="_blank" rel="noopener">PI or not to PI in game lighting equation</a><br>
+</li>
+<li><a href="http://www.reedbeta.com/blog/hows-the-ndf-really-defined/" target="_blank" rel="noopener">How Is The NDF Really Defined?</a><br>
+</li>
+<li><a href="https://seblagarde.wordpress.com/2012/06/10/amd-cubemapgen-for-physically-based-rendering/" target="_blank" rel="noopener">AMD Cubemapgen for physically based rendering</a><br>
+</li>
+<li><a href="https://knarkowicz.wordpress.com/2014/12/27/analytical-dfg-term-for-ibl/" target="_blank" rel="noopener">Analytical DFG term for IBL</a></li>
+<li><a href="https://agraphicsguy.wordpress.com/2015/11/01/sampling-microfacet-brdf/" target="_blank" rel="noopener">Sampling microfacet BRDF</a></li>
+<li><a href="www.qiujiawei.com/solid-angle/">立体角(Solid Angle)详解</a></li>
+</ol>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Image-Base-Lighting/" rel="tag"># Image Base Lighting</a>
+          
+            <a href="/tags/Spherical-Harmonics/" rel="tag"># Spherical Harmonics</a>
+          
+            <a href="/tags/Convolution/" rel="tag"># Convolution</a>
+          
+            <a href="/tags/Solid-Angle/" rel="tag"># Solid Angle</a>
+          
+            <a href="/tags/Importance-Sampling/" rel="tag"># Importance Sampling</a>
+          
+            <a href="/tags/Hammersley/" rel="tag"># Hammersley</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            Overview
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">ChenA</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">1</span>
+                    <span class="site-state-item-name">posts</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                    <span class="site-state-item-count">1</span>
+                    <span class="site-state-item-name">categories</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">6</span>
+                    <span class="site-state-item-name">tags</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+            <div class="links-of-author motion-element">
+              
+                <span class="links-of-author-item">
+                  <a href="https://twitter.com/chena_cpp" target="_blank" title="Twitter"><i class="fa fa-fw fa-twitter"></i>Twitter</a>
+                  
+                </span>
+              
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#irradiance-environment-map"><span class="nav-number">1.</span> <span class="nav-text">Irradiance Environment Map</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#convolution"><span class="nav-number">1.1.</span> <span class="nav-text">Convolution</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#the-basis"><span class="nav-number">1.1.1.</span> <span class="nav-text">The Basis</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#basis-function-properties"><span class="nav-number">1.1.2.</span> <span class="nav-text">Basis Function Properties</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#convolution-1"><span class="nav-number">1.1.3.</span> <span class="nav-text">Convolution</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#spherical-harmonics"><span class="nav-number">1.2.</span> <span class="nav-text">Spherical Harmonics</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#sh-basis-function"><span class="nav-number">1.2.1.</span> <span class="nav-text">SH Basis Function</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#associated-legendre-polynomials"><span class="nav-number">1.2.2.</span> <span class="nav-text">Associated Legendre polynomials</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#polynomial-forms-of-basis-function"><span class="nav-number">1.2.3.</span> <span class="nav-text">Polynomial Forms of Basis Function</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#properties"><span class="nav-number">1.2.4.</span> <span class="nav-text">Properties</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#how-to-use"><span class="nav-number">1.2.5.</span> <span class="nav-text">How to use</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#calculate-sh-cofficients"><span class="nav-number">1.3.</span> <span class="nav-text">Calculate SH Cofficients</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#solid-angle"><span class="nav-number">1.4.</span> <span class="nav-text">Solid Angle</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#define"><span class="nav-number">1.4.1.</span> <span class="nav-text">Define</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#domega公式推导"><span class="nav-number">1.4.2.</span> <span class="nav-text">\(d\omega\)公式推导</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#prefiltered-mipmaped-radiance-environment-map"><span class="nav-number">2.</span> <span class="nav-text">Prefiltered Mipmaped Radiance Environment Map</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#important-sampling"><span class="nav-number">2.1.</span> <span class="nav-text">Important Sampling</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#specular-reference"><span class="nav-number">2.2.</span> <span class="nav-text">Specular Reference</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#hammersley"><span class="nav-number">2.3.</span> <span class="nav-text">Hammersley</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#specular-sh"><span class="nav-number">2.4.</span> <span class="nav-text">Specular SH</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#future"><span class="nav-number">3.</span> <span class="nav-text">Future</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#bibliography"><span class="nav-number">4.</span> <span class="nav-text">Bibliography</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">ChenA</span>
+
+  
+
+  
+</div>
+
+
+
+
+  <div class="powered-by">Powered by <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a></div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">Theme &mdash; <a class="theme-link" target="_blank" href="https://github.com/theme-next/hexo-theme-next">NexT.Muse</a> v6.0.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=6.0.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=6.0.4"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.0.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.0.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=6.0.4"></script>
+
+
+
+  
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+  
+
+  
+    
+      <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+        processEscapes: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      },
+      TeX: {equationNumbers: { autoNumber: "AMS" }}
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+      var all = MathJax.Hub.getAllJax(), i;
+        for (i=0; i < all.length; i += 1) {
+          all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+<script type="text/javascript" src="//cdn.jsdelivr.net/npm/mathjax@2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+    
+  
+
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
