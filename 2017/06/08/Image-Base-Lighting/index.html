@@ -120,7 +120,7 @@
 <meta property="og:image" content="http://yoursite.com/2017/06/08/Image-Base-Lighting/specular_compare_metal.png">
 <meta property="og:image" content="http://yoursite.com/2017/06/08/Image-Base-Lighting/specular_compare_dielectric.png">
 <meta property="og:image" content="http://yoursite.com/2017/06/08/Image-Base-Lighting/brdf.png">
-<meta property="og:updated_time" content="2018-02-19T15:08:28.035Z">
+<meta property="og:updated_time" content="2018-02-19T16:20:05.869Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Image Base Lighting">
 <meta name="twitter:description" content="IBL能很大的提升光照效果，很多游戏里都有使用。这篇文章的目标是用一篇文章把IBL的方方面面讲明白，当然，需要读者有一定的基础知识。 如果你看完了还是有些地方不懂，给我留言，我会考虑再增补一些内容。">
@@ -568,9 +568,7 @@ d\omega = sin\theta\ d\theta\ d\phi
 <p>微分形式： <span class="math display">\[ds_{ \theta } = r_{ \theta } d\theta\]</span></p>
 <p><span class="math display">\[ds_{ \phi } = r_{ \phi } d\phi\]</span></p>
 <p><span class="math inline">\(r_{\theta}\)</span>、<span class="math inline">\(r_{\phi}\)</span>值并不是相等的：</p>
-<figure>
-<img src="dw.png" alt="calculate dw"><figcaption>calculate dw</figcaption>
-</figure>
+<p><img src="dw.png"></p>
 <p>从图可知，<span class="math inline">\(r_{\theta}\)</span>与圆的半径r相等；而<span class="math inline">\(r_{\phi}\)</span>是小于等于r的(注意看上面的小圆)，且有：</p>
 <p><span class="math display">\[sin\theta = \frac { r_{ \phi } } {r_{ \theta } }\]</span></p>
 <p>当球是单位球时，球的半径为1，所以有：</p>
@@ -599,14 +597,10 @@ cdf(x) = \int_{0}^{x}\ pdf(x)\ dx
 <p>罐装苏打水的填充重量服从正态分布，且均值为 12 盎司，标准差为 2 盎司。<br>
 概率密度函数pdf，x为填充重量，y为填充重量为x的可能性。<br>
 累积分布函数cdf，x为填充重量，y为填充重量小于x的累积概率。</p>
-<figure>
-<img src="pdf.png" alt="pdf"><figcaption>pdf</figcaption>
-</figure>
+<p><img src="pdf.png"></p>
 <p>任意特定点处的填充重量的 cdf 等于 pdf 曲线下，从原点到该点左侧区域的面积：<br>
 比如&lt;=11.5盎司的cdf是0.401294</p>
-<figure>
-<img src="cdf.png" alt="cdf"><figcaption>cdf</figcaption>
-</figure>
+<p><img src="cdf.png"></p>
 <p>如果知道cdf为0.401294，我们是可以计算出x值为11.5的。</p>
 <p>Importance Sampling，就是先生成均匀分布的随机点，然后根据pdf函数计算出采样点。<br>
 这里生成的随机点，其实就是cdf的值，根据cdf的值可以求出x。<br>
@@ -684,12 +678,8 @@ cos({s_\theta}) = \frac {\sqrt{1-\xi_\theta}} {\sqrt{1+(\alpha^2-1)\xi_\theta}}
 <p><span class="math inline">\(\Phi_2(i)\)</span>定义为：</p>
 <p><span class="math display">\[\Phi_2(i) = \frac{a_0}{2} + \frac{a_1}{2^2} + ... + \frac{a_r}{2^{r+1}}\]</span></p>
 <p>其中<span class="math inline">\(a_0 a_1 ... a_r\)</span>是i的二进制形式的每位的值，<span class="math inline">\(i = a_0 + a_1 2 + a_2 2^2 + a_3 2^3 + ... + a_r 2^r\)</span>。</p>
-<figure>
-<img src="Hammersley.png" alt="Van der Corput sequence"><figcaption>Van der Corput sequence</figcaption>
-</figure>
-<figure>
-<img src="Hammersley2.png" alt="Hammersley Point Set"><figcaption>Hammersley Point Set</figcaption>
-</figure>
+<p><img src="Hammersley.png"></p>
+<p><img src="Hammersley2.png"></p>
 <h3 id="specular-sh">Specular SH</h3>
 <p>Realtime的时候，Specular用Important Sampling的蒙特卡罗积分肯定是不行的，太慢了。</p>
 <p>所以用预计算来优化渲染速度，主要想法是把光照公式分两部分积分，光源和brdf分开单独积分。</p>
@@ -700,14 +690,15 @@ cos({s_\theta}) = \frac {\sqrt{1-\xi_\theta}} {\sqrt{1+(\alpha^2-1)\xi_\theta}}
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">float3 PrefilterEnvMap( float Roughness , float3 R )</span><br><span class="line">&#123;</span><br><span class="line">    float3 N = R;</span><br><span class="line">    float3 V = R;</span><br><span class="line">    float3 PrefilteredColor = 0;</span><br><span class="line">    const uint NumSamples = 1024;</span><br><span class="line">    for( uint i = 0; i &lt; NumSamples; i++ )</span><br><span class="line">    &#123;</span><br><span class="line">        float2 Xi = Hammersley( i, NumSamples );</span><br><span class="line">        float3 H = ImportanceSampleGGX( Xi, Roughness , N );</span><br><span class="line">        float3 L = 2 * dot( V, H ) * H - V;</span><br><span class="line">        float NoL = saturate( dot( N, L ) );</span><br><span class="line">        if( NoL &gt; 0 )</span><br><span class="line">        &#123;</span><br><span class="line">            PrefilteredColor += EnvMap.SampleLevel( EnvMapSampler , L, 0 ).rgb * NoL;</span><br><span class="line">            TotalWeight += NoL;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    return PrefilteredColor / TotalWeight;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>这里有一个假设n=r=v，这样在grazing angles的细长反射会消失，但总的来说和Reference还是非常接近的。</p>
 <p>各种情况的对比如下：</p>
-<figure>
-<img src="specular_compare_metal.png" alt="specular_compare_metal"><figcaption>specular_compare_metal</figcaption>
-</figure>
+<img src="specular_compare_metal.png">
+<p class="text-center">
+specular compare metal
+</p>
 <p>最上面是Reference，中间是分成两个部分积分，下面是把n=r=v的假设也加上。</p>
-<figure>
-<img src="specular_compare_dielectric.png" alt="specular_compare_dielectric"><figcaption>specular_compare_dielectric</figcaption>
-</figure>
-<p>非金属。</p>
+<img src="specular_compare_dielectric.png">
+<p class="text-center">
+specular compare dielectric
+</p>
 <p>现在来看brdf的积分。<br>
 Fresnel的公式为：</p>
 <p><span class="math display">\[
